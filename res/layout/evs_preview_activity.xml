@@ -16,7 +16,7 @@
               android:layout_height="match_parent"
               android:background="@android:color/transparent"
               android:orientation="vertical">
-    <Button
+     <Button
         android:id="@+id/close_button"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -24,4 +24,10 @@
         android:textColor="@color/button_text"
         android:background="@color/button_background"
         android:textSize="@dimen/close_button_text_size"/>
+
+     <android.view.SurfaceView
+        android:id="@+id/view_finder"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"/>
+
 </LinearLayout>
