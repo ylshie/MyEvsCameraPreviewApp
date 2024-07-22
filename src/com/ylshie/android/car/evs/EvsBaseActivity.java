@@ -131,8 +131,10 @@ public class EvsBaseActivity extends Activity
             int state = decideViewVisibility();
             synchronized (mLock) {
                 mDisplayState = state;
-                handleVideoStreamLocked(state == Display.STATE_ON ?
-                        STREAM_STATE_VISIBLE : STREAM_STATE_INVISIBLE);
+                int visible = state == Display.STATE_ON ?
+                        STREAM_STATE_VISIBLE : STREAM_STATE_INVISIBLE;
+                Log.d(TAG, "[Arthur] onDisplayChanged visible=" + visible);
+                handleVideoStreamLocked(visible);
             }
         }
     };
@@ -223,7 +225,7 @@ public class EvsBaseActivity extends Activity
 
     @GuardedBy("mLock")
     protected void handleVideoStreamLocked(int newState) {
-        Log.d(TAG, "Requested: " + streamStateToString(mStreamState) + " -> " +
+        Log.d(TAG, "[Arthur] Requested: " + streamStateToString(mStreamState) + " -> " +
                 streamStateToString(newState));
         if (newState == mStreamState) {
             // Safely ignore a request of transitioning to the current state.

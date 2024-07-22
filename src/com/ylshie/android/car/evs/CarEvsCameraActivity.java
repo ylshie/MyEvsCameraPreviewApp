@@ -24,11 +24,13 @@ import android.car.Car.CarServiceLifecycleListener;
 import android.car.evs.CarEvsManager;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.SurfaceView;
 
-public class CarEvsCameraActivity extends Activity {
+public class CarEvsCameraActivity extends EvsBaseActivity {
     private static final String TAG = CarEvsCameraActivity.class.getSimpleName();
     private static final int CAR_WAIT_TIMEOUT_MS = 3_000;
 
+    //private static final boolean test = false;
     /** CarService status listener  */
     private final CarServiceLifecycleListener mCarServiceLifecycleListener = (car, ready) -> {
         if (!ready) {
@@ -74,8 +76,12 @@ public class CarEvsCameraActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        Car.createCar(getApplicationContext(), /* handler = */ null, CAR_WAIT_TIMEOUT_MS,
-                mCarServiceLifecycleListener);
+        /*
+        Car.createCar(getApplicationContext(), null, CAR_WAIT_TIMEOUT_MS, mCarServiceLifecycleListener);
+        */
+        setContentView(R.layout.evs_preview_activity);
+        SurfaceView finder = findViewById(R.id.view_finder);
+        hookView(finder);
     }
 
     @Override
