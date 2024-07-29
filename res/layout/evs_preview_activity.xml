@@ -16,14 +16,54 @@
               android:layout_height="match_parent"
               android:background="@android:color/transparent"
               android:orientation="vertical">
-     <Button
-        android:id="@+id/close_button"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="@string/close_button_text"
-        android:textColor="@color/button_text"
-        android:background="@color/button_background"
-        android:textSize="@dimen/close_button_text_size"/>
+     <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              android:id="@+id/evs_preview_container"
+              android:layout_width="match_parent"
+              android:layout_height="wrap_content"
+              android:background="@android:color/transparent"
+              android:showDividers="middle"
+              android:orientation="horizontal">
+          <Button
+               android:id="@+id/close_button"
+               android:layout_width="wrap_content"
+               android:layout_height="wrap_content"
+               android:text="@string/close_button_text"
+               android:textColor="@color/button_text"
+               android:background="@color/button_background"
+               android:textSize="@dimen/close_button_text_size"/>
+          <Button
+               android:id="@+id/record_button"
+               android:layout_width="wrap_content"
+               android:layout_height="wrap_content"
+               android:text="@string/record_button_text"
+               android:textColor="@color/button_text"
+               android:background="@color/button_background"
+               android:textSize="@dimen/close_button_text_size"/>
+          <Button
+               android:id="@+id/stop_button"
+               android:layout_width="wrap_content"
+               android:layout_height="wrap_content"
+               android:text="@string/stop_button_text"
+               android:textColor="@color/button_text"
+               android:background="@color/button_background"
+               android:textSize="@dimen/close_button_text_size"/>
+          <Button
+               android:id="@+id/event_button"
+               android:layout_width="wrap_content"
+               android:layout_height="wrap_content"
+               android:text="@string/event_button_text"
+               android:textColor="@color/button_text"
+               android:background="@color/button_background"
+               android:textSize="@dimen/close_button_text_size"/>
+          <Button
+               android:id="@+id/upload_button"
+               android:layout_width="wrap_content"
+               android:layout_height="wrap_content"
+               android:text="@string/upload_button_text"
+               android:textColor="@color/button_text"
+               android:background="@color/button_background"
+               android:textSize="@dimen/close_button_text_size"/>
+     </LinearLayout>
 
      <android.view.SurfaceView
         android:id="@+id/view_finder"

@@ -18,5 +18,5 @@
     <dimen name="camera_preview_width">800dp</dimen>
     <dimen name="camera_preview_height">600dp</dimen>
 
-    <dimen name="close_button_text_size">30sp</dimen>
+    <dimen name="close_button_text_size">50sp</dimen>
 </resources>

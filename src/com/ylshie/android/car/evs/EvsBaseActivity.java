@@ -16,7 +16,7 @@ import androidx.annotation.GuardedBy;
 import static android.car.evs.CarEvsManager.ERROR_NONE;
 
 import com.android.car.internal.evs.CarEvsGLSurfaceView;
-import com.android.car.internal.evs.GLES20CarEvsBufferRenderer;
+//import com.android.car.internal.evs.GLES20CarEvsBufferRenderer;
 
 import android.opengl.GLES20;
 import android.util.Size;
@@ -38,8 +38,17 @@ import android.hardware.display.DisplayManager;
 import android.view.WindowManager;
 import android.view.View;
 
+import android.car.VehiclePropertyIds;
+import android.car.VehiclePropertyType;
+import android.car.hardware.CarPropertyValue;
+import android.car.hardware.property.CarPropertyManager;
+
 public class EvsBaseActivity extends Activity         
         implements CarEvsGLSurfaceView.BufferCallback, HardwarePipeline.BufferCallback {
+    /** Load jni on initialization. */
+    static {
+        System.loadLibrary("evsbuffer_jni");
+    }
     @GuardedBy("mLock")
     protected IBinder mSessionToken;
 
@@ -85,7 +94,7 @@ public class EvsBaseActivity extends Activity
     protected HardwarePipeline pipeline = null;
     protected EncoderWrapper encoder = null;
     protected Surface encoderSurface = null;
-    protected GLES20CarEvsBufferRenderer render = null;
+    //protected GLES20CarEvsBufferRenderer render = null;
 
     protected static String streamStateToString(int state) {
         switch (state) {
@@ -168,7 +177,7 @@ public class EvsBaseActivity extends Activity
         @Override
         public void onNewFrame(CarEvsBufferDescriptor buffer) {
             synchronized (mLock) {
-            	Log.i(TAG, "[Arthur] onNewFrame: ");
+            	//Log.i(TAG, "[Arthur] onNewFrame: ");
                 if (mStreamState == STREAM_STATE_INVISIBLE) {
                     // When the activity becomes invisible (e.g. goes background), we immediately
                     // returns received frame buffers instead of stopping a video stream.
@@ -176,7 +185,8 @@ public class EvsBaseActivity extends Activity
                 } else {
                     // Enqueues a new frame and posts a rendering job
                     mBufferQueue.add(buffer);
-                    if (render != null && pipeline != null) {
+                    //if (render != null && pipeline != null) {
+                    if (pipeline != null) {
                         /*
                         //pipeline.activeGL();
                         int[] TextureIds = pipeline.getPreviewTargetIds();
@@ -195,11 +205,46 @@ public class EvsBaseActivity extends Activity
         }
     };
 
+    public void onPropertyEvent(CarPropertyValue prop) {
+        //if (prop.getPropertyId() == VehiclePropertyIds.WINDOW_POS) {
+        Log.i(TAG, "[Arthur] onPropertyEvent: id=" + prop.getPropertyId() + " value=" + prop.getValue());
+        //    updateWindowPos(prop.getAreaId(), (int) prop.getValue());
+        //}
+    }
+    private void subscribeProps() {
+        Log.d(TAG, "[Arthur] Subscribe Props");
+    //    mPropertyManager.registerCallback(mPropCb, VehiclePropertyIds.WINDOW_POS, 10);
+        mPropertyManager.registerCallback(mPropCb, VehiclePropertyIds.AUTOMATIC_EMERGENCY_BRAKING_ENABLED, 10);
+        mPropertyManager.registerCallback(mPropCb, VehiclePropertyIds.AUTOMATIC_EMERGENCY_BRAKING_STATE, 10);
+    }
+    private void unsubscribeProps() {
+        mPropertyManager.unregisterCallback(mPropCb);
+    }
+    protected void enableAEB() {
+        Log.d(TAG,"[Arthur] Enable AEB");
+        mPropertyManager.setBooleanProperty(VehiclePropertyIds.AUTOMATIC_EMERGENCY_BRAKING_ENABLED, 0, true);
+    }
+    protected void activateAEB() {
+        Log.d(TAG,"[Arthur] Activate AEB");
+        mPropertyManager.setIntProperty(VehiclePropertyIds.AUTOMATIC_EMERGENCY_BRAKING_STATE, 0, 1);
+    }
+    CarPropertyManager mPropertyManager = null;
+    private final CarPropertyManager.CarPropertyEventCallback mPropCb =
+            new CarPropertyManager.CarPropertyEventCallback() {
+        @Override
+        public void onChangeEvent(CarPropertyValue value) {
+            onPropertyEvent(value);
+        }
+
+        @Override
+        public void onErrorEvent(int propId, int zone) {}
+    };
     /** CarService status listener  */
     private final CarServiceLifecycleListener mCarServiceLifecycleListener = (car, ready) -> {
         try {
             synchronized (mLock) {
                 mCar = ready ? car : null;
+                mPropertyManager = (CarPropertyManager) car.getCarManager(android.car.Car.PROPERTY_SERVICE);
                 mEvsManager = ready ? (CarEvsManager) car.getCarManager(Car.CAR_EVS_SERVICE) : null;
                 if (!ready) {
                     if (!mUseSystemWindow) {
@@ -216,6 +261,9 @@ public class EvsBaseActivity extends Activity
                 } else {
                     // We request to start a video stream if we get connected to the car service.
                     handleVideoStreamLocked(STREAM_STATE_VISIBLE);
+                }
+                if (mPropertyManager != null) {
+                    subscribeProps();
                 }
             }
         } catch (CarNotConnectedException err) {
@@ -316,13 +364,17 @@ public class EvsBaseActivity extends Activity
     }
 
     public boolean updateTexture(HardwareBuffer buffer, int textureId) {
-        if (render == null) return false;
-        boolean res = render.nUpdateTexture(buffer, textureId);
+        //if (render == null) return false;
+        //boolean res = render.nUpdateTexture(buffer, textureId);
+        boolean res = nUpdateTexture(buffer, textureId);
         return res;
     }
 
     private File createFile(Context context, String filename) {
-        File folderPath = context.getExternalFilesDir(null);
+        //File folderPath = context.getExternalFilesDir(null);
+        File folderPath = context.getFilesDir();
+        Log.d(TAG, "[Arthur] create file at folder " + folderPath);
+
         return new File(folderPath, filename); //"VID_${sdf.format(Date())}.$extension");
     }
     private String genUniqueName() {
@@ -331,7 +383,45 @@ public class EvsBaseActivity extends Activity
         return filename;
     }
     private final int RECORDER_VIDEO_BITRATE = 10_000_000;
-
+    //Surface encoderSurface = null;
+    File outputFile = null;
+    File eventFile = null;
+    boolean recordingStarted = false;
+    //EncoderWrapper encoder = null;
+    /*
+    protected void createEncoder() {
+        String basename = genUniqueName();
+        Context context = this;
+        outputFile = createFile(this, basename + ".mp4");
+        eventFile = createFile(this, basename + "_ev.mp4");
+        FileGen gen = new FileGen() {
+            @Override
+            public File create() {
+                String base = genUniqueName();
+                String name = base + ".mp4";
+                File file = createFile(context, name);
+                return file;
+            }
+        };
+        encoder = new EncoderWrapper(previewSize.getWidth(),previewSize.getHeight(), RECORDER_VIDEO_BITRATE,30, 0, gen, outputFile, eventFile);
+        encoderSurface = encoder.getInputSurface();
+    }
+    */
+    protected void startEncoding() {
+        Log.i(TAG, "[Arthur] start encoding");
+        pipeline.actionDown(encoderSurface);
+        // Finalizes encoder setup and starts recording
+        recordingStarted = true;
+        encoder.start();
+        pipeline.startRecording();
+    }
+    protected void stopEncoding() {
+        Log.i(TAG, "[Arthur] stop encoding");
+        pipeline.stopRecording();
+        encoder.waitForFirstFrame();
+        encoder.saveEventFile(eventFile);
+        encoder.shutdown();
+    }
     protected void hookView(SurfaceView viewFinder) {
         if (viewFinder != null) {
             createPipeline(viewFinder);
@@ -343,6 +433,7 @@ public class EvsBaseActivity extends Activity
                 public void surfaceCreated(SurfaceHolder _holder) {
                     Log.d(TAG, "[Arthur] surfaceCreated");
                     //createTexture();
+                    //createEncoder();
                     viewFinder.post(new Runnable() {
                         @Override
                         public void run() {
@@ -362,7 +453,9 @@ public class EvsBaseActivity extends Activity
             });
         }
     }
-
+    public String getUploadFile() {
+        return encoder.getUploadFile();
+    }
     private void createPipeline(SurfaceView viewFinder) {
         mDisplayManager = getSystemService(DisplayManager.class);
         mDisplayManager.registerDisplayListener(mDisplayListener, null);
@@ -380,12 +473,13 @@ public class EvsBaseActivity extends Activity
         int angleInDegree = getApplicationContext()
                 .getResources().getInteger(R.integer.config_evsRearviewCameraInPlaneRotationAngle);
         Log.d(TAG, "[Arthur] new GLES20CarEvsBufferRenderer");
-        render = new GLES20CarEvsBufferRenderer(callbacks, angleInDegree, DEFAULT_1X1_POSITION);
+        //render = new GLES20CarEvsBufferRenderer(callbacks, angleInDegree, DEFAULT_1X1_POSITION);
         int orientation = 0;
         String basename = genUniqueName();
         File outputFile = createFile(this, basename + ".mp4");
         File eventFile = createFile(this, basename + "_ev.mp4");
         Context context = this;
+        Log.d(TAG, "[Arthur] save to " + basename);
         FileGen gen = new FileGen() {
             @Override
             public File create() {
@@ -445,4 +539,6 @@ public class EvsBaseActivity extends Activity
             super.onDestroy();
         }
     }
+
+    public native boolean nUpdateTexture(HardwareBuffer buffer, int textureId);
 }

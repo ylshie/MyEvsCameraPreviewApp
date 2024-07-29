@@ -25,6 +25,13 @@ import android.car.evs.CarEvsManager;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.SurfaceView;
+import android.view.View;
+import android.view.ViewGroup;
+import android.view.MotionEvent;
+import android.hardware.HardwareBuffer;
+import android.widget.Button;
+import java.io.File;
+import android.net.Uri;
 
 public class CarEvsCameraActivity extends EvsBaseActivity {
     private static final String TAG = CarEvsCameraActivity.class.getSimpleName();
@@ -81,9 +88,60 @@ public class CarEvsCameraActivity extends EvsBaseActivity {
         */
         setContentView(R.layout.evs_preview_activity);
         SurfaceView finder = findViewById(R.id.view_finder);
+        Button event = findViewById(R.id.event_button);
+        Button upload = findViewById(R.id.upload_button);
         hookView(finder);
+        //View closeButton = finder.findViewById(R.id.close_button);
+        if (finder != null) {
+            finder.setOnTouchListener(new View.OnTouchListener() {
+                @Override
+                public boolean onTouch(View view, MotionEvent motionEvent) {
+                    switch (motionEvent.getAction()) {
+                    case MotionEvent.ACTION_DOWN:
+                        //setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LOCKED);
+                        startEncoding();
+                        Log.d(TAG, "Action Down");
+                        break;
+                    case MotionEvent.ACTION_UP:
+                        stopEncoding();
+                        Log.d(TAG,"Action Up");
+                        ////preback();
+                        ////Playback(eventFile);
+                        break;
+                    }
+                    return false;
+                }
+            });
+            //finder.setOnClickListener()
+        }
+        if (event != null) {
+            event.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick (View v) {
+                    Log.d(TAG,"[Arthur] Event:OnClick");
+                    enableAEB();
+                }
+            });
+        }
+        if (upload != null) {
+            upload.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick (View v) {
+                    Log.d(TAG,"[Arthur] Click Upload");
+                    uploadTest();
+                }
+            });
+        }
     }
-
+    protected void uploadTest() {
+        String url = "https://transpal-dev.pixseecare.com/client_service/api/v1/events";
+        String id = "TJ1W9OQVO0";
+        String secret = "PWfcvMY7PN";
+        String file = getUploadFile();
+        Uri uri = (file != null)? Uri.fromFile(new File(file)): null;
+        UploadTask task = new UploadTask(url, id, secret, uri);
+        task.execute();
+    }
     @Override
     protected void onDestroy() {
         Log.d(TAG, "onDestroy");

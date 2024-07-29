@@ -280,7 +280,7 @@ public class HardwarePipeline {
             CarEvsBufferDescriptor bufferToRender = mBufferCallback.requestBuffer();
             HardwareBuffer buffer = bufferToRender.getHardwareBuffer();
             boolean res = mBufferCallback.updateTexture(buffer, cameraTexId);
-            Log.d(TAG, "[Arthur] updateTexture " + res);
+            //Log.d(TAG, "[Arthur] updateTexture " + res);
             onFrameAvailableImpl(null);
             if (bufferToReturn != null) {
                 mBufferCallback.releaseBuffer(bufferToReturn);
@@ -416,13 +416,13 @@ public class HardwarePipeline {
             Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
             Canvas canvas = new Canvas(bitmap);
             if (useEVS) {
-                canvas.rotate(45);
-                canvas.translate(0, 0);
+                //canvas.rotate(45);
+                //canvas.translate(0, 0);
             } else {
-            //canvas.rotate(-90);
-            //canvas.translate(-height, 0);
-            //canvas.drawColor(Color.GREEN);
-            //checkGlError("glClear");
+                //canvas.rotate(-90);
+                //canvas.translate(-height, 0);
+                //canvas.drawColor(Color.GREEN);
+                //checkGlError("glClear");
             }
             Date date = new Date();
             Paint mPaint = new Paint();
@@ -571,7 +571,8 @@ public class HardwarePipeline {
             }
 
             Rect area = new Rect(viewportX, viewportY, viewportWidth, viewportHeight);
-            copyTexture(renderTexId, renderTexture, area, renderToPreviewShaderProgram, false);
+            //copyTexture(renderTexId, renderTexture, area, renderToPreviewShaderProgram, false);
+            copyTexture(renderTexId, renderTexture, area, renderToPreviewShaderProgram, true);
 
             EGL14.eglSwapBuffers(eglDisplay, eglWindowSurface);
         /*

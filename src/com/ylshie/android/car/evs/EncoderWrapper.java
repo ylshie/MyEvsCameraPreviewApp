@@ -57,6 +57,7 @@ public class EncoderWrapper {
     private int mOrientationHint;
     private FileGen mOutputs;
     private File mOutputFile;
+    private String mFilePath = null;
     private File mEventFile;
     //private boolean mUseMediaRecorder;
     private int mVideoCodec;
@@ -70,6 +71,9 @@ public class EncoderWrapper {
     MediaFormat mEncodedFormat = null;
     Surface mInputSurface = null;
 
+    public String getUploadFile() {
+        return mFilePath;
+    }
     protected EncoderThread createEncoderThread() {
         if (useMediaRecorder) return null;
         else return new EncoderThread(mEncoder, mOrientationHint);
@@ -500,6 +504,9 @@ public class EncoderWrapper {
                             PreMux = mMuxer;
                         }
                         if (bNew) {
+                            if (mOutputFile != null) {
+                                mFilePath = mOutputFile.toPath().toString();
+                            }
                             mOutputFile = mOutputs.create();
                             timeFile = mBufferInfo.presentationTimeUs;
                             mMuxer = createMuxer(mOutputFile);

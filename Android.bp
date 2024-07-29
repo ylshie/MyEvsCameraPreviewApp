@@ -54,5 +54,8 @@ android_app {
 
     // To make this app be able to re-installed
     use_embedded_native_libs: true,
-    jni_libs: ["libcarevsglrenderer_jni"],
+    jni_libs: [
+    	"libcarevsglrenderer_jni",
+    	"libevsbuffer_jni",
+    ],
 }
